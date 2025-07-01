@@ -1,8 +1,9 @@
-import streamlit as st 
+import streamlit as st
+import json
+import os
 
 st.title("Job Application Tracker")
 
-# List of jobs with their application links
 jobs = {
     "Trainee Data analyst": "https://www.adzuna.co.uk/jobs/details/4986013048?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
     "Data Analyst, Deloitte": "https://gb.bebee.com/job/67460146b4e585bf0c2da19583ecc6c7?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
@@ -20,15 +21,40 @@ jobs = {
     "Service Desk Analyst, Hays": "https://www.linkedin.com/jobs/view/4255988653",
     "IT Service Desk Engineer": "https://www.linkedin.com/jobs/view/4242590705",
     "IT Support Officer, Welsh Rugby": "https://www.linkedin.com/jobs/view/4257017155",
-    "AI Analyst": "https://www.linkedin.com/jobs/view/4250266675"   
+    "AI Analyst": "https://www.linkedin.com/jobs/view/4250266675"
 }
+
+# File to save the checked states
+STATE_FILE = "job_checklist_state.json"
+
+# Load saved checkbox states from file or start fresh
+if os.path.exists(STATE_FILE):
+    with open(STATE_FILE, "r") as f:
+        saved_states = json.load(f)
+else:
+    saved_states = {}
 
 st.write("Here are the jobs I'm planning to apply for. Click on the job title to view the application link.")
 
+# Function to save the states
+def save_states(states):
+    with open(STATE_FILE, "w") as f:
+        json.dump(states, f)
+
+# Loop through jobs and create checkboxes with saved state
 for job, link in jobs.items():
-    # Display each job title as a clickable link with a checkbox to mark as applied
-    checked = st.checkbox(f"[{job}]({link})")
-    if checked:
+    # Use saved state or False if none
+    checked = saved_states.get(job, False)
+
+    # Display checkbox, on_change saves new state
+    new_state = st.checkbox(f"[{job}]({link})", value=checked, key=job)
+
+    # Update saved state and save if changed
+    if new_state != checked:
+        saved_states[job] = new_state
+        save_states(saved_states)
+
+    if new_state:
         st.success(f"You have marked {job} as applied.")
     else:
         st.info(f"Click the checkbox to mark {job} as applied.")
