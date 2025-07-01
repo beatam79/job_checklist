@@ -1,9 +1,12 @@
 import streamlit as st
 import json
 import os
+from datetime import date
 
-st.title("Job Application Tracker")
+# File to store application data
+DATA_FILE = "job_data.json"
 
+# Initial job list
 jobs = {
     "Data Analyst, Deloitte": "https://gb.bebee.com/job/67460146b4e585bf0c2da19583ecc6c7?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
     "Graduate Data & Tech Programme": "https://www.whitbreadcareers.com/job-details/78585-4492/digital_data__technology_graduate_programme__september_2025_start",
@@ -21,39 +24,47 @@ jobs = {
     "IT Service Desk Engineer": "https://www.linkedin.com/jobs/view/4242590705",
     "IT Support Officer, Welsh Rugby": "https://www.linkedin.com/jobs/view/4257017155",
     "AI Analyst": "https://www.linkedin.com/jobs/view/4250266675"
+    # Add the rest of your jobs here...
 }
 
-# File to save the checked states
-STATE_FILE = "job_checklist_state.json"
-
-# Load saved checkbox states from file or start fresh
-if os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "r") as f:
-        saved_states = json.load(f)
+# Load or initialize data
+if os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "r") as f:
+        job_data = json.load(f)
 else:
-    saved_states = {}
+    job_data = {job: {"applied": False, "notes": "", "date": ""} for job in jobs}
+    with open(DATA_FILE, "w") as f:
+        json.dump(job_data, f)
 
-st.write("Here are the jobs I'm planning to apply for. Click on the job title to view the application link.")
+st.title("Job Application Tracker")
 
-# Function to save the states
-def save_states(states):
-    with open(STATE_FILE, "w") as f:
-        json.dump(states, f)
+# Filter
+filter_option = st.selectbox("Filter jobs by:", ["All", "Applied", "Not Applied"])
 
-# Loop through jobs and create checkboxes with saved state
+st.write("### Jobs")
 for job, link in jobs.items():
-    # Use saved state or False if none
-    checked = saved_states.get(job, False)
+    data = job_data.get(job, {"applied": False, "notes": "", "date": ""})
 
-    # Display checkbox, on_change saves new state
-    new_state = st.checkbox(f"[{job}]({link})", value=checked, key=job)
+    # Filter logic
+    if filter_option == "Applied" and not data["applied"]:
+        continue
+    if filter_option == "Not Applied" and data["applied"]:
+        continue
 
-    # Update saved state and save if changed
-    if new_state != checked:
-        saved_states[job] = new_state
-        save_states(saved_states)
+    with st.expander(job):
+        st.markdown(f"[🔗 View Job Posting]({link})", unsafe_allow_html=True)
+        applied = st.checkbox("Mark as applied", key=job, value=data["applied"])
+        notes = st.text_area("Notes", value=data["notes"], key=f"{job}-notes")
+        app_date = st.date_input("Application date", key=f"{job}-date", value=date.fromisoformat(data["date"]) if data["date"] else date.today())
 
-    if new_state:
-        st.success(f"You have marked {job} as applied.")
-    else:
-        st.info(f"Click the checkbox to mark {job} as applied.")
+        # Save on interaction
+        job_data[job] = {
+            "applied": applied,
+            "notes": notes,
+            "date": app_date.isoformat()
+        }
+
+# Save updates
+with open(DATA_FILE, "w") as f:
+    json.dump(job_data, f)
+
