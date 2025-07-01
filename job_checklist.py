@@ -5,7 +5,6 @@ import os
 st.title("Job Application Tracker")
 
 jobs = {
-    "Trainee Data analyst": "https://www.adzuna.co.uk/jobs/details/4986013048?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
     "Data Analyst, Deloitte": "https://gb.bebee.com/job/67460146b4e585bf0c2da19583ecc6c7?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
     "Graduate Data & Tech Programme": "https://www.whitbreadcareers.com/job-details/78585-4492/digital_data__technology_graduate_programme__september_2025_start",
     "Junior Web Analyst": "https://www.linkedin.com/jobs/view/4253264966",
