@@ -1,70 +1,135 @@
 import streamlit as st
 import json
 import os
-from datetime import date
+from datetime import datetime
 
-# File to store application data
+st.set_page_config(page_title="Job Application Tracker", layout="wide")
+st.title("💼 Job Application Tracker")
+
+# Local JSON file to save data
 DATA_FILE = "job_data.json"
 
-# Initial job list
-jobs = {
-    "Data Analyst, Deloitte": "https://gb.bebee.com/job/67460146b4e585bf0c2da19583ecc6c7?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
-    "Graduate Data & Tech Programme": "https://www.whitbreadcareers.com/job-details/78585-4492/digital_data__technology_graduate_programme__september_2025_start",
-    "Junior Web Analyst": "https://www.linkedin.com/jobs/view/4253264966",
-    "Graduate Scheme - HO Digital": "https://www.civilservicejobs.service.gov.uk/csr/index.cgi?SID=b3duZXJ0eXBlPWZhaXImam9ibGlzdF92aWV3X3ZhYz0xOTU4MTIyJnVzZXJzZWFyY2hjb250ZXh0PTEzODQzNTMwMiZzZWFyY2hzb3J0PXNjb3JlJm93bmVyPTUwNzAwMDAmcGFnZWFjdGlvbj12aWV3dmFjYnlqb2JsaXN0JnNlYXJjaHBhZ2U9MSZwYWdlY2xhc3M9Sm9icw==",
-    "Junior IT Support Engineer": "https://www.linkedin.com/jobs/view/4256510734",
+# Default hardcoded jobs (only used once)
+default_jobs = {
+    "Graduate Scheme - HO Digital": "https://www.civilservicejobs.service.gov.uk/...",
     "IT Support Apprentice": "https://www.linkedin.com/jobs/view/4255199263",
-    "Data Center Technician, Microsoft": "https://jobs.careers.microsoft.com/us/en/job/1829145/Data-Center-Technician?jobsource=linkedin/jobs/6952538?gh_src=00bdd2ae1",
+    "Data Center Technician, Microsoft": "https://jobs.careers.microsoft.com/us/en/job/1829145/...",
     "IT Support Technician": "https://www.linkedin.com/jobs/view/4256882186",
-    "Customer Support Technician": "https://alcumus.pinpointhq.com/postings/fe62f351-946a-4958-b9aa-431874242c78/applications/new?utm_medium=job_board&utm_source=linkedIn",
+    "Customer Support Technician, Hybrid": "https://alcumus.pinpointhq.com/postings/fe62f351...",
     "Service Desk Analyst": "https://www.linkedin.com/jobs/view/4255764277",
     "IT Service Desk Analyst": "https://www.linkedin.com/jobs/view/4252816741",
-    "Service Desk Analyst": "https://www.linkedin.com/jobs/view/4251786334",
     "Service Desk Analyst, Hays": "https://www.linkedin.com/jobs/view/4255988653",
     "IT Service Desk Engineer": "https://www.linkedin.com/jobs/view/4242590705",
     "IT Support Officer, Welsh Rugby": "https://www.linkedin.com/jobs/view/4257017155",
     "AI Analyst": "https://www.linkedin.com/jobs/view/4250266675"
-    # Add the rest of your jobs here...
 }
 
-# Load or initialize data
+# Status options
+status_options = ["Not Applied", "Applied", "Interview", "Rejected", "Offer"]
+
+# Load saved data or create a new file with defaults
 if os.path.exists(DATA_FILE):
     with open(DATA_FILE, "r") as f:
-        job_data = json.load(f)
+        data = json.load(f)
 else:
-    job_data = {job: {"applied": False, "notes": "", "date": ""} for job in jobs}
+    # Initial structure
+    data = {
+        "jobs": default_jobs,
+        "details": {}
+    }
     with open(DATA_FILE, "w") as f:
-        json.dump(job_data, f)
+        json.dump(data, f, indent=2)
 
-st.title("Job Application Tracker")
+# --- Sidebar Actions ---
+st.sidebar.header("🧰 Utilities")
 
-# Filter
-filter_option = st.selectbox("Filter jobs by:", ["All", "Applied", "Not Applied"])
+# Download button
+st.sidebar.download_button(
+    "📥 Download Backup",
+    data=json.dumps(data, indent=2),
+    file_name="job_data_backup.json",
+    mime="application/json"
+)
 
-st.write("### Jobs")
-for job, link in jobs.items():
-    data = job_data.get(job, {"applied": False, "notes": "", "date": ""})
+# Reset everything
+if st.sidebar.button("🔁 Reset All Progress"):
+    data = {
+        "jobs": default_jobs,
+        "details": {}
+    }
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+    st.sidebar.success("Progress has been reset. Refresh the page to see changes.")
+    st.stop()
 
-    # Filter logic
-    if filter_option == "Applied" and not data["applied"]:
-        continue
-    if filter_option == "Not Applied" and data["applied"]:
-        continue
+# --- Add New Job Section ---
+st.subheader("➕ Add a New Job")
+with st.form("new_job_form", clear_on_submit=True):
+    new_title = st.text_input("Job Title")
+    new_link = st.text_input("Application Link (URL)")
+    submitted = st.form_submit_button("Add Job")
+    if submitted:
+        if new_title and new_link:
+            if new_title in data["jobs"]:
+                st.warning("Job already exists.")
+            else:
+                data["jobs"][new_title] = new_link
+                data["details"][new_title] = {
+                    "status": "Not Applied",
+                    "notes": "",
+                    "date": datetime.today().strftime("%Y-%m-%d")
+                }
+                with open(DATA_FILE, "w") as f:
+                    json.dump(data, f, indent=2)
+                st.success(f"Added: {new_title}")
+                st.experimental_rerun()
+        else:
+            st.warning("Please enter both a job title and a link.")
 
-    with st.expander(job):
-        st.markdown(f"[🔗 View Job Posting]({link})", unsafe_allow_html=True)
-        applied = st.checkbox("Mark as applied", key=job, value=data["applied"])
-        notes = st.text_area("Notes", value=data["notes"], key=f"{job}-notes")
-        app_date = st.date_input("Application date", key=f"{job}-date", value=date.fromisoformat(data["date"]) if data["date"] else date.today())
+# --- Main Job Checklist UI ---
+st.subheader("📋 Your Job Applications")
 
-        # Save on interaction
-        job_data[job] = {
-            "applied": applied,
-            "notes": notes,
-            "date": app_date.isoformat()
-        }
+for job, link in data["jobs"].items():
+    st.markdown(f"### [{job}]({link})")
 
-# Save updates
+    col1, col2, col3 = st.columns([2, 3, 2])
+
+    with col1:
+        status = st.selectbox(
+            "Status",
+            status_options,
+            index=status_options.index(
+                data["details"].get(job, {}).get("status", "Not Applied")
+            ),
+            key=f"status_{job}"
+        )
+
+    with col2:
+        notes = st.text_input(
+            "Notes",
+            value=data["details"].get(job, {}).get("notes", ""),
+            key=f"notes_{job}"
+        )
+
+    with col3:
+        date_str = data["details"].get(job, {}).get("date", datetime.today().strftime("%Y-%m-%d"))
+        date = st.date_input(
+            "Date",
+            value=datetime.strptime(date_str, "%Y-%m-%d").date(),
+            key=f"date_{job}"
+        )
+
+    # Save updates
+    data["details"][job] = {
+        "status": status,
+        "notes": notes,
+        "date": str(date)
+    }
+
+    st.markdown("---")
+
+# Save to JSON file
 with open(DATA_FILE, "w") as f:
-    json.dump(job_data, f)
+    json.dump(data, f, indent=2)
 
+st.success("✅ Progress saved locally.")
