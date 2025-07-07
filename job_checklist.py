@@ -9,6 +9,8 @@ st.title("💼 Job Application Tracker")
 DATA_FILE = "job_data.json"
 
 default_jobs = {
+    "IT Support Engineer, Bristol": "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4232518920&origin=JYMBII_IN_APP_NOTIFICATION&originToLandingJobPostings=4258824691%2C4258198985",
+    "Computer Security Research Intern, HP": "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4105049801&origin=JYMBII_IN_APP_NOTIFICATION&originToLandingJobPostings=4258824691%2C4258198985",
     "Data Center Technician, Microsoft": "https://jobs.careers.microsoft.com/us/en/job/1829145/",
     "IT Support Technician": "https://www.linkedin.com/jobs/view/4256882186",
     "Customer Support Technician, Hybrid": "https://alcumus.pinpointhq.com/postings/fe62f351...",
