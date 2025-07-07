@@ -6,10 +6,8 @@ from datetime import datetime
 st.set_page_config(page_title="Job Application Tracker", layout="wide")
 st.title("💼 Job Application Tracker")
 
-# Local JSON file to save data
 DATA_FILE = "job_data.json"
 
-# Default hardcoded jobs (only used once)
 default_jobs = {
     "Graduate Scheme - HO Digital": "https://www.civilservicejobs.service.gov.uk/...",
     "IT Support Apprentice": "https://www.linkedin.com/jobs/view/4255199263",
@@ -24,45 +22,47 @@ default_jobs = {
     "AI Analyst": "https://www.linkedin.com/jobs/view/4250266675"
 }
 
-# Status options
 status_options = ["Not Applied", "Applied", "Interview", "Rejected", "Offer"]
 
-# Load saved data or create a new file with defaults
+status_icons = {
+    "Not Applied": "⬜",
+    "Applied": "✅",
+    "Interview": "🟡",
+    "Rejected": "❌",
+    "Offer": "🎉"
+}
+
+# Load existing data or create new one
 if os.path.exists(DATA_FILE):
     with open(DATA_FILE, "r") as f:
         data = json.load(f)
 else:
-    # Initial structure
     data = {
         "jobs": default_jobs,
-        "details": {}
+        "details": {
+            job: {"status": "Not Applied", "notes": "", "date": datetime.today().strftime("%Y-%m-%d")}
+            for job in default_jobs
+        }
     }
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
-# --- Sidebar Actions ---
+# Sidebar utilities
 st.sidebar.header("🧰 Utilities")
-
-# Download button
-st.sidebar.download_button(
-    "📥 Download Backup",
-    data=json.dumps(data, indent=2),
-    file_name="job_data_backup.json",
-    mime="application/json"
-)
-
-# Reset everything
-if st.sidebar.button("🔁 Reset All Progress"):
+if st.sidebar.button("🔁 Reset Progress"):
     data = {
         "jobs": default_jobs,
-        "details": {}
+        "details": {
+            job: {"status": "Not Applied", "notes": "", "date": datetime.today().strftime("%Y-%m-%d")}
+            for job in default_jobs
+        }
     }
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
-    st.sidebar.success("Progress has been reset. Refresh the page to see changes.")
-    st.stop()
+    st.sidebar.success("Progress reset. Refresh the page.")
+    st.experimental_rerun()
 
-# --- Add New Job Section ---
+# Add new job form
 st.subheader("➕ Add a New Job")
 with st.form("new_job_form", clear_on_submit=True):
     new_title = st.text_input("Job Title")
@@ -86,50 +86,40 @@ with st.form("new_job_form", clear_on_submit=True):
         else:
             st.warning("Please enter both a job title and a link.")
 
-# --- Main Job Checklist UI ---
+# Main job list with status icons
 st.subheader("📋 Your Job Applications")
 
 for job, link in data["jobs"].items():
-    st.markdown(f"### [{job}]({link})")
+    current_status = data["details"].get(job, {}).get("status", "Not Applied")
+    icon = status_icons.get(current_status, "⬜")
+
+    st.markdown(f"### {icon} [{job}]({link})")
 
     col1, col2, col3 = st.columns([2, 3, 2])
+    details = data["details"][job]
 
     with col1:
         status = st.selectbox(
-            "Status",
-            status_options,
-            index=status_options.index(
-                data["details"].get(job, {}).get("status", "Not Applied")
-            ),
-            key=f"status_{job}"
+            "Status", status_options, index=status_options.index(details["status"]), key=f"status_{job}"
         )
-
     with col2:
-        notes = st.text_input(
-            "Notes",
-            value=data["details"].get(job, {}).get("notes", ""),
-            key=f"notes_{job}"
-        )
-
+        notes = st.text_input("Notes", value=details["notes"], key=f"notes_{job}")
     with col3:
-        date_str = data["details"].get(job, {}).get("date", datetime.today().strftime("%Y-%m-%d"))
         date = st.date_input(
-            "Date",
-            value=datetime.strptime(date_str, "%Y-%m-%d").date(),
-            key=f"date_{job}"
+            "Date", value=datetime.strptime(details["date"], "%Y-%m-%d"), key=f"date_{job}"
         )
 
-    # Save updates
+    # Save updates immediately
     data["details"][job] = {
         "status": status,
         "notes": notes,
-        "date": str(date)
+        "date": date.strftime("%Y-%m-%d")
     }
 
     st.markdown("---")
 
-# Save to JSON file
+# Save all changes to file
 with open(DATA_FILE, "w") as f:
     json.dump(data, f, indent=2)
 
-st.success("✅ Progress saved locally.")
+st.success("✅ Your progress is saved locally on your machine.")
