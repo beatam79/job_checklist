@@ -68,7 +68,7 @@ if st.sidebar.button("🔁 Reset Progress"):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
     st.sidebar.success("Progress reset. Refresh the page.")
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Add a new job ---
 st.subheader("➕ Add a New Job")
@@ -90,7 +90,7 @@ with st.form("new_job_form", clear_on_submit=True):
                 with open(DATA_FILE, "w") as f:
                     json.dump(data, f, indent=2)
                 st.success(f"Added: {new_title}")
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.warning("Please enter both a job title and a link.")
 
