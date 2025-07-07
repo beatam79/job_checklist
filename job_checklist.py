@@ -11,6 +11,8 @@ DATA_FILE = "job_data.json"
 
 # Default hardcoded jobs (only used once)
 default_jobs = {
+    "Trainee Data Analyst": "https://www.adzuna.co.uk/jobs/details/4986013048?...",
+    "Data Analyst, Deloitte": "https://gb.bebee.com/job/67460146b4e585bf0c2da19583ecc6c7?...",
     "Graduate Scheme - HO Digital": "https://www.civilservicejobs.service.gov.uk/...",
     "IT Support Apprentice": "https://www.linkedin.com/jobs/view/4255199263",
     "Data Center Technician, Microsoft": "https://jobs.careers.microsoft.com/us/en/job/1829145/...",
